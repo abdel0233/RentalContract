@@ -60,6 +60,7 @@ const T = {
         errorTerms: 'Please accept the terms to proceed.',
         errorDates: 'Check-out must be after check-in.',
         errorId: 'Please upload both front and back of your ID.',
+        errorExtraGuests: 'Please upload ID for all additional guests.',
         errorSignature: 'Please sign the contract.',
         errorWebhook: 'Failed to submit form. Please try again.',
         errorWebhookMissing: 'Webhook URL is missing in environment variables.',
@@ -119,6 +120,7 @@ const T = {
         errorTerms: 'Veuillez accepter les conditions pour continuer.',
         errorDates: 'La date de sortie doit être après la date d\'entrée.',
         errorId: 'Veuillez télécharger le recto et le verso de votre pièce d\'identité.',
+        errorExtraGuests: 'Veuillez télécharger la pièce d\'identité de tous les autres locataires.',
         errorSignature: 'Veuillez signer le contrat.',
         errorWebhook: 'Échec de la soumission. Veuillez réessayer.',
         errorWebhookMissing: 'URL du webhook manquante dans les variables d\'environnement.',
@@ -177,6 +179,7 @@ const T = {
         errorTerms: 'يرجى قبول الشروط للمتابعة.',
         errorDates: 'يجب أن يكون تاريخ المغادرة بعد تاريخ الوصول.',
         errorId: 'يرجى رفع الوجهين الأمامي والخلفي للهوية.',
+        errorExtraGuests: 'يرجى رفع هوية جميع المستأجرين الإضافيين.',
         errorSignature: 'يرجى التوقيع على العقد.',
         errorWebhook: 'فشل إرسال النموذج. يرجى المحاولة مرة أخرى.',
         errorWebhookMissing: 'رابط الـ webhook مفقود في متغيرات البيئة.',
@@ -341,6 +344,11 @@ function App() {
     });
 
     const [files, setFiles] = useState({ idFront: null, idBack: null });
+    const [extraGuestFiles, setExtraGuestFiles] = useState({});
+
+    const handleExtraGuestFile = (guestIndex, file) => {
+        setExtraGuestFiles(prev => ({ ...prev, [`guestIdFront_${guestIndex}`]: file }));
+    };
 
     // -----------------------------------------------------------------------
     // On mount: read ?apt= and fetch sheet
@@ -358,7 +366,7 @@ function App() {
                 const row = rows.find(r => r.apt_id === apt);
                 if (!row) { setAptStatus('not_found'); return; }
                 if (String(row.is_active).toLowerCase() !== 'true') { setAptStatus('not_active'); return; }
-                setAptData({ apt_id: row.apt_id, address: row.address, owner_name: row.owner_name, owner_email: row.owner_email, drive_folder_id: row.drive_folder_id });
+                setAptData({ apt_id: row.apt_id, address: row.address, owner_name: row.owner_name, owner_email: row.owner_email, drive_folder_id: row.drive_folder_id, max_guests: parseInt(row.max_guests) || 1 });
                 setFormData(prev => ({ ...prev, address: row.address }));
                 setAptStatus('ok');
             })
@@ -385,6 +393,11 @@ function App() {
         if (!formData.termsAccepted) { setError(t.errorTerms); return; }
         if (new Date(formData.checkOutDate) <= new Date(formData.checkInDate)) { setError(t.errorDates); return; }
         if (!files.idFront || !files.idBack) { setError(t.errorId); return; }
+        if (formData.guests > 1) {
+            for (let i = 2; i <= formData.guests; i++) {
+                if (!extraGuestFiles[`guestIdFront_${i}`]) { setError(t.errorExtraGuests); return; }
+            }
+        }
         if (sigPadRef.current.isEmpty()) { setError(t.errorSignature); return; }
 
         setLoading(true);
@@ -409,6 +422,9 @@ function App() {
             formPayload.append('ownerName', aptData.owner_name);
             formPayload.append('idFront', files.idFront);
             formPayload.append('idBack', files.idBack);
+            Object.entries(extraGuestFiles).forEach(([key, file]) => {
+                formPayload.append(key, file);
+            });
             const signatureCanvas = sigPadRef.current.getTrimmedCanvas();
             formPayload.append('signaturePngBase64', signatureCanvas.toDataURL('image/png'));
 
@@ -426,6 +442,7 @@ function App() {
             setSuccess(true);
             setFormData({ fullName: '', dateOfBirth: '', nationality: '', idType: 'National ID', idNumber: '', phone: '', email: '', checkInDate: '', checkOutDate: '', guests: 1, address: aptData ? aptData.address : '', termsAccepted: false });
             setFiles({ idFront: null, idBack: null });
+            setExtraGuestFiles({});
             sigPadRef.current.clear();
             window.scrollTo(0, 0);
         } catch (err) {
@@ -452,8 +469,8 @@ function App() {
                     type="button"
                     onClick={() => changeLang(l)}
                     className={`px-3 py-1 rounded-md text-sm font-semibold transition-all ${lang === l
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     {T.en.lang[l]}
@@ -603,7 +620,7 @@ function App() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.guests}</label>
-                                <input type="number" name="guests" min="1" max="20" value={formData.guests} onChange={handleInputChange}
+                                <input type="number" name="guests" min="1" max={aptData?.max_guests || 1} value={formData.guests} onChange={handleInputChange}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
                             </div>
 
@@ -629,6 +646,29 @@ function App() {
                             <FileUpload label={t.idBack} name="idBack" required onChange={handleFileChange} />
                         </div>
                     </div>
+
+                    {/* Section: Additional Guests ID */}
+                    {formData.guests > 1 && (
+                        <div className="p-8 border-b border-gray-100">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                Additional Guests ID
+                            </h2>
+                            {Array.from({ length: formData.guests - 1 }, (_, i) => i + 2).map(guestIndex => (
+                                <div key={guestIndex} className="mb-6">
+                                    <h3 className="text-base font-medium text-gray-700 mb-3">Guest {guestIndex}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <FileUpload
+                                            label={t.idFront}
+                                            name={`guestIdFront_${guestIndex}`}
+                                            required
+                                            onChange={(name, file) => handleExtraGuestFile(guestIndex, file)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Section: Contract Terms & Signature */}
                     <div className="p-8">
