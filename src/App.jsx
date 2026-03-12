@@ -378,6 +378,15 @@ function App() {
     // -----------------------------------------------------------------------
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === 'guests') {
+            const numValue = parseInt(value) || 1;
+            const maxGuests = aptData?.max_guests || 1;
+            const capped = Math.min(Math.max(numValue, 1), maxGuests);
+            setFormData(prev => ({ ...prev, guests: capped }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
