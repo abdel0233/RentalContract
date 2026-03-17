@@ -345,6 +345,7 @@ function App() {
 
     const [files, setFiles] = useState({ idFront: null, idBack: null });
     const [extraGuestFiles, setExtraGuestFiles] = useState({});
+    const [guestsInput, setGuestsInput] = useState('1');
 
     const handleExtraGuestFile = (guestIndex, file) => {
         setExtraGuestFiles(prev => ({ ...prev, [`guestIdFront_${guestIndex}`]: file }));
@@ -378,15 +379,6 @@ function App() {
     // -----------------------------------------------------------------------
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-
-        if (name === 'guests') {
-            const numValue = parseInt(value) || 1;
-            const maxGuests = aptData?.max_guests || 1;
-            const capped = Math.min(Math.max(numValue, 1), maxGuests);
-            setFormData(prev => ({ ...prev, guests: capped }));
-            return;
-        }
-
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
@@ -450,6 +442,7 @@ function App() {
 
             setSuccess(true);
             setFormData({ fullName: '', dateOfBirth: '', nationality: '', idType: 'National ID', idNumber: '', phone: '', email: '', checkInDate: '', checkOutDate: '', guests: 1, address: aptData ? aptData.address : '', termsAccepted: false });
+            setGuestsInput('1');
             setFiles({ idFront: null, idBack: null });
             setExtraGuestFiles({});
             sigPadRef.current.clear();
@@ -634,9 +627,17 @@ function App() {
                                     name="guests"
                                     min="1"
                                     max={aptData?.max_guests || 1}
-                                    value={formData.guests}
-                                    onChange={handleInputChange}
-                                    onFocus={(e) => e.target.select()}
+                                    value={guestsInput}
+                                    onChange={(e) => {
+                                        setGuestsInput(e.target.value);
+                                    }}
+                                    onBlur={(e) => {
+                                        const numValue = parseInt(e.target.value) || 1;
+                                        const maxGuests = aptData?.max_guests || 1;
+                                        const capped = Math.min(Math.max(numValue, 1), maxGuests);
+                                        setGuestsInput(String(capped));
+                                        setFormData(prev => ({ ...prev, guests: capped }));
+                                    }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 />
                             </div>
