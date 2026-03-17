@@ -629,8 +629,16 @@ function App() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.guests}</label>
-                                <input type="number" name="guests" min="1" max={aptData?.max_guests || 1} value={formData.guests} onChange={handleInputChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+                                <input
+                                    type="number"
+                                    name="guests"
+                                    min="1"
+                                    max={aptData?.max_guests || 1}
+                                    value={formData.guests}
+                                    onChange={handleInputChange}
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                />
                             </div>
 
                             <div className="col-span-1 md:col-span-2">
