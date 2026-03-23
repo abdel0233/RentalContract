@@ -26,6 +26,7 @@ const T = {
         nationalityPlaceholder: 'Select nationality…',
         phone: 'Phone Number',
         email: 'Email Address',
+        clause6: '6. Moroccan Law: The tenant agrees to comply with applicable Moroccan law, particularly regarding accommodation and cohabitation of unmarried persons, and declares full responsibility in case of non-compliance with applicable legal provisions.',
         idType: 'ID Type',
         idNumber: 'ID Number',
         nationalId: 'National ID',
@@ -64,6 +65,8 @@ const T = {
         errorSignature: 'Please sign the contract.',
         errorWebhook: 'Failed to submit form. Please try again.',
         errorWebhookMissing: 'Webhook URL is missing in environment variables.',
+        confirmEmail: 'Confirm Email Address',
+        errorEmailMismatch: 'Email addresses do not match. Please check and try again.',
         // error screens
         loading: 'Loading apartment details…',
         invalidLinkTitle: 'Invalid Link',
@@ -92,6 +95,7 @@ const T = {
         nationalityPlaceholder: 'Sélectionner la nationalité…',
         phone: 'Téléphone',
         email: 'Adresse Email',
+        clause6: '6. Législation marocaine : Le locataire s\'engage à respecter la législation marocaine en vigueur, notamment en ce qui concerne l\'hébergement et la cohabitation de personnes non mariées, et déclare assumer l\'entière responsabilité en cas de non-respect des dispositions légales applicables.',
         idType: 'Type de pièce d\'identité',
         idNumber: 'Numéro d\'identité',
         nationalId: 'Carte Nationale',
@@ -124,6 +128,8 @@ const T = {
         errorSignature: 'Veuillez signer le contrat.',
         errorWebhook: 'Échec de la soumission. Veuillez réessayer.',
         errorWebhookMissing: 'URL du webhook manquante dans les variables d\'environnement.',
+        confirmEmail: 'Confirmer l\'adresse email',
+        errorEmailMismatch: 'Les adresses email ne correspondent pas. Veuillez vérifier et réessayer.',
         loading: 'Chargement des informations du logement…',
         invalidLinkTitle: 'Lien invalide',
         invalidLinkMsg: 'Aucun appartement n\'a été spécifié dans ce lien. Veuillez utiliser le lien fourni par votre hôte.',
@@ -151,6 +157,7 @@ const T = {
         nationalityPlaceholder: 'اختر الجنسية…',
         phone: 'رقم الهاتف',
         email: 'البريد الإلكتروني',
+        clause6: '6. التشريع المغربي: يلتزم المستأجر باحترام التشريعات المغربية المعمول بها، ولا سيما فيما يتعلق بالإيواء والتعايش بين الأشخاص غير المتزوجين، ويُقر بتحمله المسؤولية الكاملة في حالة عدم الامتثال للأحكام القانونية المطبقة.',
         idType: 'نوع الهوية',
         idNumber: 'رقم الهوية',
         nationalId: 'بطاقة وطنية',
@@ -183,6 +190,8 @@ const T = {
         errorSignature: 'يرجى التوقيع على العقد.',
         errorWebhook: 'فشل إرسال النموذج. يرجى المحاولة مرة أخرى.',
         errorWebhookMissing: 'رابط الـ webhook مفقود في متغيرات البيئة.',
+        confirmEmail: 'تأكيد البريد الإلكتروني',
+        errorEmailMismatch: 'عناوين البريد الإلكتروني غير متطابقة. يرجى التحقق والمحاولة مرة أخرى.',
         loading: 'جارٍ تحميل تفاصيل الشقة…',
         invalidLinkTitle: 'رابط غير صالح',
         invalidLinkMsg: 'لم يتم تحديد أي شقة في هذا الرابط. يرجى استخدام الرابط المقدم من مضيفك.',
@@ -336,6 +345,7 @@ function App() {
         idNumber: '',
         phone: '',
         email: '',
+        confirmEmail: '',
         checkInDate: '',
         checkOutDate: '',
         guests: 1,
@@ -391,6 +401,7 @@ function App() {
         setError(null);
         setSuccess(false);
 
+        if (formData.email !== formData.confirmEmail) { setError(t.errorEmailMismatch); return; }
         if (!formData.termsAccepted) { setError(t.errorTerms); return; }
         if (new Date(formData.checkOutDate) <= new Date(formData.checkInDate)) { setError(t.errorDates); return; }
         if (!files.idFront || !files.idBack) { setError(t.errorId); return; }
@@ -441,7 +452,7 @@ function App() {
             if (!response.ok) throw new Error(t.errorWebhook);
 
             setSuccess(true);
-            setFormData({ fullName: '', dateOfBirth: '', nationality: '', idType: 'National ID', idNumber: '', phone: '', email: '', checkInDate: '', checkOutDate: '', guests: 1, address: aptData ? aptData.address : '', termsAccepted: false });
+            setFormData({ fullName: '', dateOfBirth: '', nationality: '', idType: 'National ID', idNumber: '', phone: '', email: '', confirmEmail: '', checkInDate: '', checkOutDate: '', guests: 1, address: aptData ? aptData.address : '', termsAccepted: false });
             setGuestsInput('1');
             setFiles({ idFront: null, idBack: null });
             setExtraGuestFiles({});
@@ -578,6 +589,19 @@ function App() {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
                             </div>
 
+                            {/* Confirm Email */}
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{t.confirmEmail} *</label>
+                                <input
+                                    type="email"
+                                    name="confirmEmail"
+                                    required
+                                    value={formData.confirmEmail}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                />
+                            </div>
+
                             {/* ID Type */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.idType}</label>
@@ -705,6 +729,7 @@ function App() {
                                 <p className="mb-2">{t.clause3}</p>
                                 <p className="mb-2">{t.clause4}</p>
                                 <p className="mb-2">{t.clause5}</p>
+                                <p className="mb-2 font-medium text-red-600">{t.clause6}</p>
                             </div>
 
                             {/* Terms checkbox */}
