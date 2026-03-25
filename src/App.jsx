@@ -377,7 +377,7 @@ function App() {
                 const row = rows.find(r => r.apt_id === apt);
                 if (!row) { setAptStatus('not_found'); return; }
                 if (String(row.is_active).toLowerCase() !== 'true') { setAptStatus('not_active'); return; }
-                setAptData({ apt_id: row.apt_id, address: row.address, owner_name: row.owner_name, owner_email: row.owner_email, drive_folder_id: row.drive_folder_id, max_guests: parseInt(row.max_guests) || 1 });
+                setAptData({ apt_id: row.apt_id, address: row.address, owner_name: row.owner_name, owner_email: row.owner_email, owner_phone: row.owner_phone || '', drive_folder_id: row.drive_folder_id, max_guests: parseInt(row.max_guests) || 1 });
                 setFormData(prev => ({ ...prev, address: row.address }));
                 setAptStatus('ok');
             })
@@ -432,6 +432,7 @@ function App() {
             formPayload.append('ownerEmail', aptData.owner_email);
             formPayload.append('driveFolderId', aptData.drive_folder_id);
             formPayload.append('ownerName', aptData.owner_name);
+            formPayload.append('ownerPhone', aptData.owner_phone || '');
             formPayload.append('idFront', files.idFront);
             formPayload.append('idBack', files.idBack);
             Object.entries(extraGuestFiles).forEach(([key, file]) => {
