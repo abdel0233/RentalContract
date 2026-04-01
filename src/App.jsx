@@ -730,7 +730,7 @@ function App() {
                                 <p className="mb-2">{t.clause3}</p>
                                 <p className="mb-2">{t.clause4}</p>
                                 <p className="mb-2">{t.clause5}</p>
-                                <p className="mb-2 font-medium text-red-600">{t.clause6}</p>
+                                <p className="mb-2">{t.clause6}</p>
                             </div>
 
                             {/* Terms checkbox */}
